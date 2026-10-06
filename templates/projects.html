@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Vergangene Projekte – Stielvoll{% endblock %}
+{% block content %}
+<section class="page container">
+  <div class="reveal">
+    <p class="eyebrow">Projekte</p>
+    <h1>Vergangene Projekte</h1>
+    <p class="lead">Einblicke in Gärten, die wir gestalten durften – mit Geschichten, Ideen und Tipps.</p>
+  </div>
+
+  <div class="post-list">
+    {% for project in projects %}
+    <article class="post-card reveal">
+      <a class="post-card-img" href="{{ url_for('projects_detail', slug=project.slug) }}" tabindex="-1" aria-hidden="true">
+        <img src="{{ url_for('static', filename=project.image) }}" alt="" loading="lazy">
+      </a>
+      <div class="post-card-body">
+        <p class="post-meta">
+          <span class="tag">{{ project.category }}</span>
+          {{ project.date | date_de }} · {{ project.location }}
+        </p>
+        <h2><a href="{{ url_for('projects_detail', slug=project.slug) }}">{{ project.title }}</a></h2>
+        <p>{{ project.summary }}</p>
+        {% set n = comment_counts.get(project.slug, 0) %}
+        <p class="post-footer">
+          <a href="{{ url_for('projects_detail', slug=project.slug) }}">Weiterlesen →</a>
+          <span class="muted">{{ n }} {{ 'Kommentar' if n == 1 else 'Kommentare' }}</span>
+        </p>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

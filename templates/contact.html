@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Kontakt – Stielvoll{% endblock %}
+{% block content %}
+<section class="page container">
+  <div class="reveal">
+    <p class="eyebrow">Kontakt</p>
+    <h1>Besuchen Sie uns</h1>
+  </div>
+  <div class="contact-grid">
+    <div class="hours-card reveal">
+      <h2>Adresse</h2>
+      <p>Stielvoll Gartencenter<br>Musterstrasse 12<br>8000 Zürich</p>
+      <p>
+        Telefon: <a href="tel:+41440000000">044 000 00 00</a><br>
+        E-Mail: <a href="mailto:info@stielvoll.ch">info@stielvoll.ch</a>
+      </p>
+    </div>
+    <div class="hours-card reveal" style="--delay: 90ms">
+      <h2>Öffnungszeiten</h2>
+      {% include "_opening_hours.html" %}
+    </div>
+  </div>
+</section>
+{% endblock %}

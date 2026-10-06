@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Über uns – Stielvoll{% endblock %}
+{% block content %}
+<section class="page container">
+  <div class="reveal">
+    <p class="eyebrow">Über uns</p>
+    <h1>Mit Herz und grünem Daumen</h1>
+    <p class="lead">
+      Stielvoll ist ein Gartencenter mit Leidenschaft für Pflanzen, Natur und
+      gute Beratung.
+    </p>
+  </div>
+  <div class="split reveal">
+    <img src="{{ url_for('static', filename='img/anzucht.jpg') }}" alt="Junge Setzlinge in Anzuchtschalen">
+    <div>
+      <p>
+        Wir setzen auf regionale Produzenten, torffreie Erden und Pflanzen,
+        die zum Schweizer Klima passen. So wachsen Ihre Pflanzen nicht nur
+        schön, sondern auch nachhaltig.
+      </p>
+      <p>
+        Ob Hobbygärtnerin oder Profi – unser Team nimmt sich Zeit für Ihre
+        Fragen und hilft Ihnen, die richtige Pflanze für den richtigen Ort zu finden.
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}

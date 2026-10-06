@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} – Stielvoll{% endblock %}
+{% block content %}
+<article class="post">
+  <header class="post-hero" style="--hero-img: url('{{ url_for('static', filename=project.image) }}')">
+    <div class="container post-hero-inner">
+      <a class="back-link" href="{{ url_for('projects') }}">← Alle Projekte</a>
+      <p class="post-meta">
+        <span class="tag">{{ project.category }}</span>
+        {{ project.date | date_de }} · {{ project.location }}
+      </p>
+      <h1>{{ project.title }}</h1>
+    </div>
+  </header>
+
+  <div class="container post-content">
+    <p class="lead reveal">{{ project.summary }}</p>
+    {% for paragraph in project.body %}
+    <p class="reveal">{{ paragraph }}</p>
+    {% endfor %}
+
+    <nav class="post-nav" aria-label="Weitere Projekte">
+      {% if newer %}<a href="{{ url_for('projects_detail', slug=newer.slug) }}">← {{ newer.title }}</a>{% else %}<span></span>{% endif %}
+      {% if older %}<a href="{{ url_for('projects_detail', slug=older.slug) }}">{{ older.title }} →</a>{% endif %}
+    </nav>
+  </div>
+</article>
+
+<section id="kommentare" class="comments">
+  <div class="container post-content">
+    <h2>Kommentare ({{ comments | length }})</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+      <p class="flash flash-{{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+
+    {% if comments %}
+    <ol class="comment-list">
+      {% for c in comments %}
+      <li class="comment">
+        <div class="comment-avatar" aria-hidden="true">{{ c.name[:1] | upper }}</div>
+        <div>
+          <p class="comment-head"><strong>{{ c.name }}</strong> <span class="muted">{{ c.created_at | date_de }}</span></p>
+          <p class="comment-text">{{ c.text }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <p class="muted">Noch keine Kommentare – schreiben Sie den ersten!</p>
+    {% endif %}
+
+    <form class="comment-form" method="post" action="{{ url_for('projects_detail', slug=project.slug) }}#kommentare">
+      <h3>Kommentar schreiben</h3>
+      <label for="name">Name</label>
+      <input id="name" name="name" type="text" required maxlength="{{ name_max }}" value="{{ form.name }}" autocomplete="name">
+      <label for="text">Kommentar</label>
+      <textarea id="text" name="text" rows="5" required maxlength="{{ text_max }}">{{ form.text }}</textarea>
+      <div class="hp" aria-hidden="true">
+        <label for="website">Website</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <button class="button" type="submit">Kommentar senden</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
