@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} – Stielvoll{% endblock %}
+{% block content %}
+<article class="post">
+  <div class="container post-content">
+    <a class="back-link" href="{{ url_for('projects') }}">← Alle Projekte</a>
+    <p class="post-meta" style="margin-top:16px">
+      <span class="tag">Blog</span>{{ post.created_at | date_de }} · {{ post.author }}
+    </p>
+    <h1>{{ post.title }}</h1>
+
+    {% if post.image %}
+    <div class="blog-widget">
+      <img src="{{ url_for('static', filename='uploads/' ~ post.image) }}" alt="{{ post.title }}"
+           onerror="this.style.display='none'">
+      {% if widget %}<div class="widget-output">{{ widget | safe }}</div>{% endif %}
+    </div>
+    {% endif %}
+
+    {% for paragraph in post.body.split('\n') if paragraph.strip() %}
+    <p>{{ paragraph }}</p>
+    {% endfor %}
+  </div>
+</article>
+{% endblock %}

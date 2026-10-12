@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Admin-Dashboard – Stielvoll{% endblock %}
+{% block content %}
+<section class="page container">
+  <div class="admin-head reveal">
+    <div>
+      <p class="eyebrow">Administration</p>
+      <h1>Blogbeitrag erstellen</h1>
+    </div>
+    <a class="back-link" href="{{ url_for('admin_logout') }}">Abmelden</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <p class="flash flash-{{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</p>
+    {% endfor %}
+  {% endwith %}
+
+  <form class="comment-form reveal" method="post" action="{{ url_for('admin_dashboard') }}" enctype="multipart/form-data">
+    <label for="title">Titel</label>
+    <input id="title" name="title" type="text" required>
+    <label for="body">Text</label>
+    <textarea id="body" name="body" rows="8" required></textarea>
+    <label for="image">Titelbild (Bild-Upload)</label>
+    <input id="image" name="image" type="file">
+    <button class="button" type="submit">Veröffentlichen</button>
+  </form>
+
+  <h2 style="margin-top:48px">Veröffentlichte Beiträge</h2>
+  {% if posts %}
+  <ul class="admin-posts">
+    {% for p in posts %}
+    <li><a href="{{ url_for('blog_post', post_id=p.id) }}">{{ p.title }}</a>
+      <span class="muted">· {{ p.author }} · {{ p.created_at | date_de }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">Noch keine Beiträge.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -9,6 +9,22 @@
   </div>
 
   <div class="post-list">
+    {% for post in posts %}
+    <article class="post-card reveal">
+      <a class="post-card-img" href="{{ url_for('blog_post', post_id=post.id) }}" tabindex="-1" aria-hidden="true">
+        {% if post.image %}<img src="{{ url_for('static', filename='uploads/' ~ post.image) }}" alt="" loading="lazy">{% endif %}
+      </a>
+      <div class="post-card-body">
+        <p class="post-meta">
+          <span class="tag">Blog</span>
+          {{ post.created_at | date_de }} · {{ post.author }}
+        </p>
+        <h2><a href="{{ url_for('blog_post', post_id=post.id) }}">{{ post.title }}</a></h2>
+        <p>{{ post.body[:160] }}{% if post.body|length > 160 %}…{% endif %}</p>
+        <p class="post-footer"><a href="{{ url_for('blog_post', post_id=post.id) }}">Weiterlesen →</a></p>
+      </div>
+    </article>
+    {% endfor %}
     {% for project in projects %}
     <article class="post-card reveal">
       <a class="post-card-img" href="{{ url_for('projects_detail', slug=project.slug) }}" tabindex="-1" aria-hidden="true">

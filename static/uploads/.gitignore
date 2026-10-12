@@ -1,0 +1,3 @@
+# Keep this directory in git, but never commit uploaded challenge payloads.
+*
+!.gitignore

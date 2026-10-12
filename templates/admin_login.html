@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Administration – Stielvoll{% endblock %}
+{% block content %}
+<section class="page container">
+  <div class="auth-card reveal">
+    <p class="eyebrow">Administration</p>
+    <h1>Anmelden</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+      <p class="flash flash-{{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+    <form method="post" action="{{ url_for('admin_login') }}">
+      <label for="username">Benutzername</label>
+      <input id="username" name="username" type="text" autocomplete="username" required>
+      <label for="password">Passwort</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="button" type="submit">Anmelden</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
