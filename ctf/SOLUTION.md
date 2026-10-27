@@ -89,7 +89,7 @@ foothold user.
 ## Step 4 — Flag & pivot
 
 ```
-cat /home/analyst/user.txt     # → user flag
+cat /home/analyst/user.txt     # → CWHS2026{rooted_like_a_begonia}
 ```
 
 From the `analyst` foothold, local privilege-escalation to the root/second

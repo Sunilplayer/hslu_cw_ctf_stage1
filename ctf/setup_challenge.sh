@@ -15,7 +15,7 @@ fi
 
 FOOTHOLD_USER="analyst"
 FOOTHOLD_PASS='analystpw123!'
-USER_FLAG="${USER_FLAG:-CTF{stielvoll_sqli_upload_rce}}"
+USER_FLAG="${USER_FLAG:-CWHS2026{rooted_like_a_begonia}}"
 
 # --- create the foothold user (idempotent) ---
 if id "$FOOTHOLD_USER" &>/dev/null; then
@@ -50,5 +50,5 @@ Run the web app AS the foothold user so RCE lands as '$FOOTHOLD_USER':
 
 Place a second / root flag out of scope yourself, e.g.:
 
-    printf 'CTF{...}\n' > /root/root.txt && chmod 600 /root/root.txt
+    printf 'CWHS2026{...}\n' > /root/root.txt && chmod 600 /root/root.txt
 EOF
