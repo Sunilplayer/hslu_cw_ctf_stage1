@@ -15,9 +15,11 @@ user flag on the host.
    hand (UNION) and detectable by sqlmap. (Posting a comment is parameterised
    and safe.)
 2. **Login** at `/admin` with those credentials.
-3. **Insecure upload + SSTI/RCE**: the admin "Blogbeitrag erstellen" form
-   accepts any file as a "Titelbild". When the post is opened, the uploaded
-   file is rendered as a Jinja template → code execution as the web user.
+3. **SSTI → RCE** (code execution as the web user), two ways to the same sink:
+   - `/admin/preview?content={{7*7}}` — reflected, single request, so a scanner
+     (nuclei) detects it when run with the admin session cookie from step 2.
+   - the "Blogbeitrag erstellen" **Titelbild** upload accepts any file; when the
+     post is opened the file is rendered as a Jinja template (stored variant).
 4. From the shell, read the **user flag** (out of scope of the web app itself).
 
 Full walkthrough with payloads: [SOLUTION.md](SOLUTION.md).

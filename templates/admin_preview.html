@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Live-Vorschau – Stielvoll{% endblock %}
+{% block content %}
+<section class="page container">
+  <div class="admin-head reveal">
+    <div>
+      <p class="eyebrow">Administration</p>
+      <h1>Live-Vorschau</h1>
+    </div>
+    <a class="back-link" href="{{ url_for('admin_dashboard') }}">← Dashboard</a>
+  </div>
+
+  <form class="comment-search reveal" method="get" action="{{ url_for('admin_preview') }}">
+    <label for="content">Beitragsinhalt (wird gerendert)</label>
+    <div class="comment-search-row">
+      <input id="content" name="content" type="text" value="{{ content }}" placeholder="Text …">
+      <button class="button" type="submit">Vorschau</button>
+    </div>
+  </form>
+
+  <div class="search-results reveal">
+    <h3>Vorschau</h3>
+    <div class="widget-output">{{ rendered | safe }}</div>
+  </div>
+</section>
+{% endblock %}

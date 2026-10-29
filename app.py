@@ -443,6 +443,29 @@ def admin_dashboard():
     return render_template("admin_dashboard.html", posts=posts)
 
 
+@app.route("/admin/preview")
+@login_required
+def admin_preview():
+    # ====================================================================
+    # CTF VULN #3 — SERVER-SIDE TEMPLATE INJECTION → RCE (reflected)
+    # The "Live-Vorschau" renders the beitrag content straight through Jinja's
+    # render_template_string and reflects the result in the SAME response, so
+    #     /admin/preview?content={{7*7}}
+    # returns 49. This single-request, reflected SSTI is what vulnerability
+    # scanners (nuclei's ssti templates, etc.) detect — when pointed at this
+    # endpoint with the admin session cookie obtained after login. It is the
+    # same insecure engine that renders uploaded cover files when a blog post
+    # is opened (the stored variant in `blog_post`). Weaponised:
+    #     ?content={{ cycler.__init__.__globals__.os.popen('id').read() }}
+    # ====================================================================
+    content = request.args.get("content", "")
+    try:
+        rendered = render_template_string(content) if content else ""
+    except Exception as exc:  # noqa: BLE001 — show errors to help players
+        rendered = f"[Vorschau-Fehler: {exc}]"
+    return render_template("admin_preview.html", content=content, rendered=rendered)
+
+
 if __name__ == "__main__":
     # Lean by default: no debugger, no reloader (the reloader runs a second
     # process and watches files). Set FLASK_DEBUG=1 for local development only.
