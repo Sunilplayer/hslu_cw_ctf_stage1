@@ -20,6 +20,8 @@ user flag on the host.
      (nuclei) detects it when run with the admin session cookie from step 2.
    - the "Blogbeitrag erstellen" **Titelbild** upload accepts any file; when the
      post is opened the file is rendered as a Jinja template (stored variant).
+     `os`/`subprocess` are in the render context, so the plain
+     `{{ os.popen('id').read() }}` payload works — no gadget chain needed.
 4. From the shell, read the **user flag** (out of scope of the web app itself).
 
 Full walkthrough with payloads: [SOLUTION.md](SOLUTION.md).

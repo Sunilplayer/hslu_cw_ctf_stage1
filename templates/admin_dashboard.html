@@ -23,6 +23,11 @@
     <textarea id="body" name="body" rows="8" required></textarea>
     <label for="image">Titelbild (Bild-Upload)</label>
     <input id="image" name="image" type="file">
+    <p class="muted" style="margin-top:4px">
+      Tipp: Das Titelbild wird als dynamisches Widget gerendert. Du kannst
+      Vorlagen-Platzhalter wie <code>{{ '{{7*7}}' }}</code> verwenden – sie
+      werden beim Öffnen des Beitrags ausgewertet.
+    </p>
     <button class="button" type="submit">Veröffentlichen</button>
   </form>
 

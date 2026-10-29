@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import subprocess
 from datetime import datetime
 from functools import wraps
 from zoneinfo import ZoneInfo
@@ -17,6 +18,17 @@ from flask import (
     url_for,
 )
 from werkzeug.utils import secure_filename
+
+# ====================================================================
+# CTF VULN #3 helper — intentionally dangerous SSTI render context.
+# `os` and `subprocess` are injected straight into the Jinja namespace so the
+# simplest, most widely documented Jinja2 SSTI payload gives code execution
+# with no __globals__ gadget chain required:
+#     {{ os.popen('id').read() }}
+#     {{ subprocess.check_output(['id']) }}
+# (The classic cycler/lipsum/config gadgets still work too — it is real Jinja.)
+# ====================================================================
+SSTI_CONTEXT = {"os": os, "subprocess": subprocess}
 
 from projects import PROJECTS, PROJECTS_BY_SLUG
 
@@ -342,8 +354,9 @@ def blog_post(post_id):
     # The uploaded "cover image" is read back and rendered through Jinja's
     # render_template_string when the post is opened. A file uploaded via the
     # admin area whose bytes are a Jinja/SSTI payload is therefore executed
-    # server-side the moment someone views the blog post, e.g.:
-    #   {{ cycler.__init__.__globals__.os.popen('id').read() }}
+    # server-side the moment someone views the blog post. Because os/subprocess
+    # are injected into the render context, the simplest textbook payload works:
+    #   {{ os.popen('cat /home/analyst/user.txt').read() }}
     # Normal image bytes render to harmless noise. This is deliberately insecure.
     # ====================================================================
     widget = ""
@@ -351,7 +364,7 @@ def blog_post(post_id):
         path = os.path.join(app.config["UPLOAD_DIR"], post["image"])
         try:
             with open(path, "r", errors="ignore") as fh:
-                widget = render_template_string(fh.read())
+                widget = render_template_string(fh.read(), **SSTI_CONTEXT)
         except Exception as exc:  # noqa: BLE001 — show errors to help players
             widget = f"[Widget-Fehler: {exc}]"
 
@@ -455,12 +468,13 @@ def admin_preview():
     # scanners (nuclei's ssti templates, etc.) detect — when pointed at this
     # endpoint with the admin session cookie obtained after login. It is the
     # same insecure engine that renders uploaded cover files when a blog post
-    # is opened (the stored variant in `blog_post`). Weaponised:
-    #     ?content={{ cycler.__init__.__globals__.os.popen('id').read() }}
+    # is opened (the stored variant in `blog_post`). Weaponised (os is in the
+    # render context, so no gadget chain is needed):
+    #     ?content={{ os.popen('id').read() }}
     # ====================================================================
     content = request.args.get("content", "")
     try:
-        rendered = render_template_string(content) if content else ""
+        rendered = render_template_string(content, **SSTI_CONTEXT) if content else ""
     except Exception as exc:  # noqa: BLE001 — show errors to help players
         rendered = f"[Vorschau-Fehler: {exc}]"
     return render_template("admin_preview.html", content=content, rendered=rendered)

