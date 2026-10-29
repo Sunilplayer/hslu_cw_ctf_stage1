@@ -36,6 +36,35 @@
       {% endfor %}
     {% endwith %}
 
+    <form class="comment-search" method="get" action="{{ url_for('projects_detail', slug=project.slug) }}#kommentare">
+      <label for="q">Kommentare durchsuchen</label>
+      <div class="comment-search-row">
+        <input id="q" name="q" type="text" value="{{ search_query }}" placeholder="Stichwort …">
+        <button class="button" type="submit">Suchen</button>
+      </div>
+    </form>
+
+    {% if search_results is not none %}
+    <div class="search-results">
+      <h3>Suchergebnisse für „{{ search_query }}“ ({{ search_results | length }})</h3>
+      {% if search_results %}
+      <ol class="comment-list">
+        {% for c in search_results %}
+        <li class="comment">
+          <div class="comment-avatar" aria-hidden="true">{{ c.name[:1] | upper }}</div>
+          <div>
+            <p class="comment-head"><strong>{{ c.name }}</strong> <span class="muted">{{ c.created_at }}</span></p>
+            <p class="comment-text">{{ c.text }}</p>
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="muted">Keine passenden Kommentare gefunden.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
     {% if comments %}
     <ol class="comment-list">
       {% for c in comments %}

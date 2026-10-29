@@ -268,3 +268,13 @@ h3 { font-size: 1.2rem; }
 .blog-widget img { border-radius: var(--radius); box-shadow: var(--shadow); }
 .widget-output { margin-top: 12px; padding: 14px 16px; background: var(--mint); border-radius: 10px; font-family: ui-monospace, Menlo, monospace; font-size: 0.9rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 .site-footer a { color: var(--green-900); }
+
+/* ---------- Kommentar-Suche ---------- */
+.comment-search { margin: 8px 0 20px; }
+.comment-search label { font-weight: 600; font-size: 0.95rem; display: block; margin-bottom: 6px; }
+.comment-search-row { display: flex; gap: 8px; }
+.comment-search-row input { flex: 1; font: inherit; padding: 10px 12px; border: 1px solid var(--green-100); border-radius: 10px; background: var(--surface); }
+.comment-search-row input:focus { outline: 2px solid var(--green-500); outline-offset: 1px; }
+.comment-search-row .button { border: 0; cursor: pointer; font: inherit; font-weight: 600; }
+.search-results { background: var(--surface); border: 1px solid var(--green-100); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 28px; }
+.search-results h3 { margin: 0 0 14px; }

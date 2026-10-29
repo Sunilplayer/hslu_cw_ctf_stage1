@@ -9,9 +9,11 @@ user flag on the host.
 
 ## Attack path (overview)
 
-1. **SQL injection** in the *Kommentar* (comment) field on any blog/project
-   page → leaks the admin credentials `tom-admin` / `@ndAouGot1t!` from the
-   `users` table.
+1. **SQL injection** in the *Kommentare durchsuchen* search (GET param `q`) on
+   any project page → leaks the admin credentials `tom-admin` / `@ndAouGot1t!`
+   from the `users` table. Reflected and GET-based, so it is exploitable by
+   hand (UNION) and detectable by sqlmap. (Posting a comment is parameterised
+   and safe.)
 2. **Login** at `/admin` with those credentials.
 3. **Insecure upload + SSTI/RCE**: the admin "Blogbeitrag erstellen" form
    accepts any file as a "Titelbild". When the post is opened, the uploaded

