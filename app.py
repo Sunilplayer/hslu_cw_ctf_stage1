@@ -1,6 +1,8 @@
 import os
+import shutil
 import sqlite3
 import subprocess
+import sys
 from datetime import datetime
 from functools import wraps
 from zoneinfo import ZoneInfo
@@ -199,6 +201,42 @@ def init_db():
             )
             """
         )
+
+
+def reset_db():
+    """Reset the challenge to its default state after an attack.
+
+    Clears everything players can add — submitted comments, admin blog posts
+    and uploaded payloads — and re-seeds the tom-admin account and tables.
+    Safe to run while the server is up (SQLite is file-based; the next request
+    opens a fresh connection). Invoke with:  python app.py reset
+    """
+    init_db()  # make sure tables + the tom-admin row exist
+    with sqlite3.connect(app.config["DATABASE"]) as db:
+        db.execute("DELETE FROM comments")
+        db.execute("DELETE FROM blogposts")
+        # reset AUTOINCREMENT counters so ids start at 1 again
+        db.execute(
+            "DELETE FROM sqlite_sequence WHERE name IN ('comments', 'blogposts')"
+        )
+        db.commit()
+
+    # Wipe uploaded files but keep the directory and its .gitignore.
+    upload_dir = app.config["UPLOAD_DIR"]
+    for entry in os.listdir(upload_dir):
+        if entry == ".gitignore":
+            continue
+        path = os.path.join(upload_dir, entry)
+        if os.path.isdir(path) and not os.path.islink(path):
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+
+    print("Challenge reset: comments/blogposts cleared, uploads wiped, "
+          f"{ADMIN_USER} re-seeded.")
 
 
 init_db()
@@ -481,6 +519,13 @@ def admin_preview():
 
 
 if __name__ == "__main__":
+    # `python app.py reset` restores the default state (clear comments, blog
+    # posts and uploaded payloads; re-seed tom-admin) without starting the
+    # server — handy between attempts or after an attacker left data behind.
+    if len(sys.argv) > 1 and sys.argv[1] == "reset":
+        reset_db()
+        sys.exit(0)
+
     # Lean by default: no debugger, no reloader (the reloader runs a second
     # process and watches files). Set FLASK_DEBUG=1 for local development only.
     # Bind address is configurable so you don't have to edit code to expose it

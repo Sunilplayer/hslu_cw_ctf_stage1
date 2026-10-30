@@ -57,7 +57,16 @@ or change the host in `app.py` to `0.0.0.0`) and run the process **as the
 
 ## Resetting between attempts
 
-- Comments / blog posts: delete `instance/stielvoll.db` (it is recreated on
-  start, re-seeding the `tom-admin` account).
-- Uploaded payloads: empty `static/uploads/` (the `.gitignore` there keeps the
-  directory but ignores its contents).
+One command restores the default state — clears submitted comments, admin blog
+posts and uploaded payloads, and re-seeds the `tom-admin` account:
+
+```bash
+SECRET_KEY=... .venv/bin/python app.py reset
+```
+
+It is safe to run while the server is up (SQLite is file-based; the next
+request opens a fresh connection), so you can reset after an attacker without
+restarting the process. The `static/uploads/.gitignore` is preserved.
+
+Manual equivalent, if you prefer: delete `instance/stielvoll.db` (recreated and
+re-seeded on next start) and empty `static/uploads/` (keep `.gitignore`).
