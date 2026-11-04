@@ -27,17 +27,18 @@ results. Enter this in the search box (or as `?q=`):
 The results list then shows every row of the `users` table:
 
 ```
-tom-admin        (text column: @ndAouGot1t!)                    role: admin
-service-backup   (text column: CWHS2026{sql_served_me_the_whole_garden})   role: none
+tom-admin   (text column: @ndAouGot1t!)                           role: admin
+flag-user   (text column: CWHS2026{sql_served_me_the_whole_garden})   role: flag
 ```
 
 Two rewards in one dump:
 
 - **`tom-admin` / `@ndAouGot1t!`** — the admin credentials used in Step 2.
-- **`service-backup`** — a decoy account whose *password is a flag*
-  (`CWHS2026{sql_served_me_the_whole_garden}`). Its role is `none`, so it
-  **cannot** be used to log in (the admin form only accepts `role = admin`);
-  it exists purely as loot for dumping the table. This is the **database flag**.
+- **`flag-user`** — a decoy account whose *password is a flag*
+  (`CWHS2026{sql_served_me_the_whole_garden}`). Its role is `flag` (anything but
+  `admin`), so it **cannot** be used to log in (the admin form only accepts
+  `role = admin`); it exists purely as loot for dumping the table. This is the
+  **database flag**.
 
 Useful variants:
 
@@ -186,5 +187,5 @@ challenge design (sudo misconfig, SUID, cron, etc.).
 
 | Flag | Where | How |
 |------|-------|-----|
-| `CWHS2026{sql_served_me_the_whole_garden}` | `service-backup` password in the `users` table | Step 1 — SQL injection dump (no login needed) |
+| `CWHS2026{sql_served_me_the_whole_garden}` | `flag-user` password in the `users` table | Step 1 — SQL injection dump (no login needed) |
 | `CWHS2026{rooted_like_a_begonia}` | `/home/analyst/user.txt` on the host | Step 3–4 — SSTI → RCE |

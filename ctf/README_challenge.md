@@ -12,9 +12,9 @@ user flag on the host.
 1. **SQL injection** in the *Kommentare durchsuchen* search (GET param `q`) on
    any project page → dumps the `users` table. That yields the admin
    credentials `tom-admin` / `@ndAouGot1t!` **and a database flag**: the
-   decoy account `service-backup` whose password is the flag
-   (`CWHS2026{…}`). That account has role `none`, so it cannot log in — it is
-   pure loot. Reflected and GET-based, so it is exploitable by hand (UNION) and
+   decoy account `flag-user` whose password is the flag
+   (`CWHS2026{…}`). That account's role is not `admin`, so it cannot log in — it
+   is pure loot. Reflected and GET-based, so it is exploitable by hand (UNION) and
    detectable by sqlmap. (Posting a comment is parameterised and safe.)
 2. **Login** at `/admin` with those credentials.
 3. **SSTI → RCE** (code execution as the web user), two ways to the same sink:

@@ -225,10 +225,18 @@ def reset_db():
     Safe to run while the server is up (SQLite is file-based; the next request
     opens a fresh connection). Invoke with:  python app.py reset
     """
-    init_db()  # make sure tables + the tom-admin row exist
+    init_db()  # make sure tables + the tom-admin / flag rows exist
     with sqlite3.connect(app.config["DATABASE"]) as db:
         db.execute("DELETE FROM comments")
         db.execute("DELETE FROM blogposts")
+        # Prune any stray accounts: the users table must contain exactly the
+        # two canonical rows (renaming the seeded flag account, for example,
+        # would otherwise leave the old row behind — INSERT OR IGNORE never
+        # deletes).
+        db.execute(
+            "DELETE FROM users WHERE username NOT IN (?, ?)",
+            (ADMIN_USER, DB_FLAG_USER),
+        )
         # reset AUTOINCREMENT counters so ids start at 1 again
         db.execute(
             "DELETE FROM sqlite_sequence WHERE name IN ('comments', 'blogposts')"
@@ -250,7 +258,7 @@ def reset_db():
                 pass
 
     print("Challenge reset: comments/blogposts cleared, uploads wiped, "
-          f"{ADMIN_USER} re-seeded.")
+          f"users pruned to {ADMIN_USER} + {DB_FLAG_USER}.")
 
 
 init_db()
