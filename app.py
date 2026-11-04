@@ -68,7 +68,7 @@ ADMIN_PASSWORD = "@ndAouGot1t!"
 # it cannot be used to log in to the admin area — its only purpose is to be
 # dumped by the SQL injection (VULN #1). The DB flag is the reward for pulling
 # the whole users table.
-DB_FLAG_USER = "service-backup"
+DB_FLAG_USER = "flag-user"
 DB_FLAG = "CWHS2026{sql_served_me_the_whole_garden}"
 
 NAV_ITEMS = [
@@ -199,7 +199,7 @@ def init_db():
         # so the login (which requires role='admin') rejects it. It only ever
         # surfaces when the attacker dumps the users table via the SQLi.
         db.execute(
-            "INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, 'none')",
+            "INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, 'flag')",
             (DB_FLAG_USER, DB_FLAG),
         )
         # Blog posts created through the admin area.
