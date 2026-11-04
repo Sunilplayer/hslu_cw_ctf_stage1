@@ -64,6 +64,13 @@ COMMENT_TEXT_MAX = 2000
 ADMIN_USER = "tom-admin"
 ADMIN_PASSWORD = "@ndAouGot1t!"
 
+# Decoy account whose "password" is actually a flag. It has no admin role, so
+# it cannot be used to log in to the admin area — its only purpose is to be
+# dumped by the SQL injection (VULN #1). The DB flag is the reward for pulling
+# the whole users table.
+DB_FLAG_USER = "service-backup"
+DB_FLAG = "CWHS2026{sql_served_me_the_whole_garden}"
+
 NAV_ITEMS = [
     ("index", "Home"),
     ("projects", "Vergangene Projekte"),
@@ -187,6 +194,13 @@ def init_db():
         db.execute(
             "INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, 'admin')",
             (ADMIN_USER, ADMIN_PASSWORD),
+        )
+        # Decoy account: its "password" is a flag and its role is not 'admin',
+        # so the login (which requires role='admin') rejects it. It only ever
+        # surfaces when the attacker dumps the users table via the SQLi.
+        db.execute(
+            "INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, 'none')",
+            (DB_FLAG_USER, DB_FLAG),
         )
         # Blog posts created through the admin area.
         db.execute(
@@ -437,7 +451,10 @@ def admin_login():
             "SELECT username, role FROM users WHERE username = ? AND password = ?",
             (username, password),
         ).fetchone()
-        if row:
+        # Only admin-role accounts may enter. The decoy flag account matches
+        # here (its password is the flag) but has role 'none', so it is turned
+        # away exactly like a wrong password — it is a loot target, not a login.
+        if row and row["role"] == "admin":
             session["user"] = row["username"]
             session["role"] = row["role"]
             flash("Willkommen im Admin-Bereich.", "success")
